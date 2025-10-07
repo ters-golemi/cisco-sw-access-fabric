@@ -1,0 +1,34 @@
+!
+! Underlay IS-IS Configuration Template
+! Device: {{ inventory_hostname }}
+! Generated: {{ ansible_date_time.date }}
+!
+! Loopback Interface
+interface Loopback0
+ description Underlay Router ID - {{ inventory_hostname }}
+ ip address {{ loopback0 }} 255.255.255.255
+ ip router isis UNDERLAY
+!
+! IS-IS Router Configuration
+router isis UNDERLAY
+ net {{ isis_net }}
+ is-type {{ underlay.isis.level }}
+ metric-style {{ underlay.isis.metric_style }}
+ log-adjacency-changes
+ passive-interface default
+{% for interface in uplink_interfaces | default([]) %}
+ no passive-interface {{ interface }}
+{% endfor %}
+!
+{% for interface in uplink_interfaces | default([]) %}
+! Uplink Interface {{ interface }}
+interface {{ interface }}
+ description Uplink to Core
+ no switchport
+ mtu {{ underlay.mtu }}
+ ip router isis UNDERLAY
+ isis network point-to-point
+ no shutdown
+!
+{% endfor %}
+! End of Configuration

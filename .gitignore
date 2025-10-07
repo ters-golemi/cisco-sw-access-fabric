@@ -1,0 +1,48 @@
+# Environment and credentials
+.env
+.vault_pass
+*.pem
+*.key
+
+# Python
+venv/
+env/
+*.pyc
+__pycache__/
+*.egg-info/
+dist/
+build/
+
+# Ansible
+*.retry
+ansible.log
+
+# Backups
+backups/
+*.cfg.bak
+*.bak
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Configuration with sensitive data (if any)
+# Uncomment if you have local config overrides
+# local_config/

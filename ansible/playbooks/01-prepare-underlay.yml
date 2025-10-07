@@ -1,0 +1,224 @@
+---
+# Playbook to prepare underlay network for SD-Access fabric
+# This configures basic device settings and underlay routing
+
+- name: Configure Underlay Network for SD-Access
+  hosts: fabric_devices
+  gather_facts: no
+  
+  tasks:
+    - name: Backup existing configuration
+      cisco.ios.ios_config:
+        backup: yes
+        backup_options:
+          filename: "{{ inventory_hostname }}_{{ ansible_date_time.date }}.cfg"
+          dir_path: ./backups/
+      tags: backup
+
+    - name: Configure hostname
+      cisco.ios.ios_hostname:
+        config:
+          hostname: "{{ inventory_hostname }}"
+      tags: hostname
+
+    - name: Configure domain name
+      cisco.ios.ios_system:
+        domain_name: "{{ dns_domain }}"
+      tags: system
+
+    - name: Configure NTP servers
+      cisco.ios.ios_ntp_global:
+        config:
+          servers:
+            - server: "{{ item }}"
+      loop: "{{ ntp_servers }}"
+      tags: ntp
+
+    - name: Configure DNS servers
+      cisco.ios.ios_config:
+        lines:
+          - "ip name-server {{ dns_servers | join(' ') }}"
+      tags: dns
+
+    - name: Configure SNMP
+      cisco.ios.ios_config:
+        lines:
+          - "snmp-server community {{ snmp_community }} RO"
+          - "snmp-server location {{ snmp_location }}"
+          - "snmp-server contact {{ snmp_contact }}"
+      tags: snmp
+
+    - name: Configure syslog
+      cisco.ios.ios_logging_global:
+        config:
+          hosts:
+            - host: "{{ item }}"
+              transport:
+                tcp:
+                  port: 514
+      loop: "{{ syslog_servers }}"
+      tags: syslog
+
+    - name: Configure loopback interface
+      cisco.ios.ios_l3_interfaces:
+        config:
+          - name: Loopback0
+            ipv4:
+              - address: "{{ loopback0 }}/32"
+        state: merged
+      tags: loopback
+
+    - name: Enable IPv4 unicast routing
+      cisco.ios.ios_config:
+        lines:
+          - "ip routing"
+      tags: routing
+
+    - name: Configure MTU on uplink interfaces
+      cisco.ios.ios_config:
+        lines:
+          - "mtu {{ underlay.mtu }}"
+        parents: "interface {{ item }}"
+      loop: "{{ uplink_interfaces | default([]) }}"
+      when: uplink_interfaces is defined
+      tags: mtu
+
+    - name: Configure IS-IS underlay routing
+      cisco.ios.ios_config:
+        lines:
+          - "net {{ isis_net }}"
+          - "is-type {{ underlay.isis.level }}"
+          - "metric-style {{ underlay.isis.metric_style }}"
+          - "log-adjacency-changes"
+          - "passive-interface default"
+        parents: "router isis UNDERLAY"
+      when: underlay.routing_protocol == 'isis'
+      tags: isis
+
+    - name: Enable IS-IS on loopback
+      cisco.ios.ios_config:
+        lines:
+          - "ip router isis UNDERLAY"
+        parents: "interface Loopback0"
+      when: underlay.routing_protocol == 'isis'
+      tags: isis
+
+    - name: Configure IS-IS on uplink interfaces
+      cisco.ios.ios_config:
+        lines:
+          - "no switchport"
+          - "ip router isis UNDERLAY"
+          - "isis network point-to-point"
+        parents: "interface {{ item }}"
+      loop: "{{ uplink_interfaces | default([]) }}"
+      when: 
+        - uplink_interfaces is defined
+        - underlay.routing_protocol == 'isis'
+      tags: isis
+
+    - name: Disable IS-IS passive on uplink interfaces
+      cisco.ios.ios_config:
+        lines:
+          - "no passive-interface {{ item }}"
+        parents: "router isis UNDERLAY"
+      loop: "{{ uplink_interfaces | default([]) }}"
+      when: 
+        - uplink_interfaces is defined
+        - underlay.routing_protocol == 'isis'
+      tags: isis
+
+    - name: Configure OSPF underlay routing
+      cisco.ios.ios_config:
+        lines:
+          - "router-id {{ loopback0 }}"
+          - "passive-interface default"
+        parents: "router ospf {{ underlay.ospf.process_id }}"
+      when: underlay.routing_protocol == 'ospf'
+      tags: ospf
+
+    - name: Enable OSPF on loopback
+      cisco.ios.ios_config:
+        lines:
+          - "ip ospf {{ underlay.ospf.process_id }} area {{ underlay.ospf.area }}"
+        parents: "interface Loopback0"
+      when: underlay.routing_protocol == 'ospf'
+      tags: ospf
+
+    - name: Configure OSPF on uplink interfaces
+      cisco.ios.ios_config:
+        lines:
+          - "no switchport"
+          - "ip ospf network point-to-point"
+          - "ip ospf {{ underlay.ospf.process_id }} area {{ underlay.ospf.area }}"
+        parents: "interface {{ item }}"
+      loop: "{{ uplink_interfaces | default([]) }}"
+      when: 
+        - uplink_interfaces is defined
+        - underlay.routing_protocol == 'ospf'
+      tags: ospf
+
+    - name: Disable OSPF passive on uplink interfaces
+      cisco.ios.ios_config:
+        lines:
+          - "no passive-interface {{ item }}"
+        parents: "router ospf {{ underlay.ospf.process_id }}"
+      loop: "{{ uplink_interfaces | default([]) }}"
+      when: 
+        - uplink_interfaces is defined
+        - underlay.routing_protocol == 'ospf'
+      tags: ospf
+
+    - name: Save configuration
+      cisco.ios.ios_config:
+        save_when: always
+      tags: save
+
+- name: Verify underlay connectivity
+  hosts: fabric_devices
+  gather_facts: no
+  
+  tasks:
+    - name: Wait for routing protocol to converge
+      pause:
+        seconds: 60
+      tags: verify
+
+    - name: Verify IS-IS neighbors
+      cisco.ios.ios_command:
+        commands:
+          - show isis neighbors
+      register: isis_neighbors
+      when: underlay.routing_protocol == 'isis'
+      tags: verify
+
+    - name: Display IS-IS neighbors
+      debug:
+        var: isis_neighbors.stdout_lines
+      when: underlay.routing_protocol == 'isis'
+      tags: verify
+
+    - name: Verify OSPF neighbors
+      cisco.ios.ios_command:
+        commands:
+          - show ip ospf neighbor
+      register: ospf_neighbors
+      when: underlay.routing_protocol == 'ospf'
+      tags: verify
+
+    - name: Display OSPF neighbors
+      debug:
+        var: ospf_neighbors.stdout_lines
+      when: underlay.routing_protocol == 'ospf'
+      tags: verify
+
+    - name: Verify IP routing table
+      cisco.ios.ios_command:
+        commands:
+          - show ip route
+      register: routing_table
+      tags: verify
+
+    - name: Display routing table summary
+      debug:
+        var: routing_table.stdout_lines
+      tags: verify

@@ -1,0 +1,170 @@
+{
+  "security_groups": [
+    {
+      "name": "Employees",
+      "tag": 10,
+      "description": "Corporate employees"
+    },
+    {
+      "name": "Guests",
+      "tag": 20,
+      "description": "Guest users"
+    },
+    {
+      "name": "Contractors",
+      "tag": 30,
+      "description": "Contract workers"
+    },
+    {
+      "name": "IoT-Devices",
+      "tag": 40,
+      "description": "IoT and smart devices"
+    },
+    {
+      "name": "Corporate-Servers",
+      "tag": 50,
+      "description": "Corporate servers"
+    },
+    {
+      "name": "Voice-Devices",
+      "tag": 60,
+      "description": "IP phones and voice devices"
+    },
+    {
+      "name": "Video-Devices",
+      "tag": 70,
+      "description": "Video conferencing equipment"
+    },
+    {
+      "name": "Printers",
+      "tag": 80,
+      "description": "Network printers"
+    },
+    {
+      "name": "Unknown",
+      "tag": 100,
+      "description": "Unknown devices"
+    }
+  ],
+  "network_devices": [
+    {
+      "name": "core-switch-1",
+      "ip": "10.2.1.1",
+      "radius_key": "cisco123",
+      "type": "Cisco"
+    },
+    {
+      "name": "core-switch-2",
+      "ip": "10.2.1.2",
+      "radius_key": "cisco123",
+      "type": "Cisco"
+    },
+    {
+      "name": "wan-router-1",
+      "ip": "10.2.2.1",
+      "radius_key": "cisco123",
+      "type": "Cisco"
+    },
+    {
+      "name": "wan-router-2",
+      "ip": "10.2.2.2",
+      "radius_key": "cisco123",
+      "type": "Cisco"
+    },
+    {
+      "name": "aggr-switch-1",
+      "ip": "10.2.3.1",
+      "radius_key": "cisco123",
+      "type": "Cisco"
+    },
+    {
+      "name": "aggr-switch-2",
+      "ip": "10.2.3.2",
+      "radius_key": "cisco123",
+      "type": "Cisco"
+    },
+    {
+      "name": "access-switch-1",
+      "ip": "10.2.4.1",
+      "radius_key": "cisco123",
+      "type": "Cisco"
+    },
+    {
+      "name": "access-switch-2",
+      "ip": "10.2.4.2",
+      "radius_key": "cisco123",
+      "type": "Cisco"
+    },
+    {
+      "name": "access-switch-3",
+      "ip": "10.2.4.3",
+      "radius_key": "cisco123",
+      "type": "Cisco"
+    },
+    {
+      "name": "access-switch-4",
+      "ip": "10.2.4.4",
+      "radius_key": "cisco123",
+      "type": "Cisco"
+    }
+  ],
+  "sgacls": [
+    {
+      "name": "Permit-Web-Services",
+      "description": "Allow HTTP and HTTPS traffic",
+      "acl_content": "permit tcp any any eq 80\npermit tcp any any eq 443\ndeny ip any any"
+    },
+    {
+      "name": "Permit-Voice",
+      "description": "Allow voice traffic",
+      "acl_content": "permit udp any any range 16384 32767\npermit tcp any any eq 2000\npermit tcp any any eq 5060\ndeny ip any any"
+    },
+    {
+      "name": "Permit-All",
+      "description": "Allow all traffic",
+      "acl_content": "permit ip any any"
+    },
+    {
+      "name": "Deny-All",
+      "description": "Deny all traffic",
+      "acl_content": "deny ip any any"
+    },
+    {
+      "name": "Permit-ICMP",
+      "description": "Allow ICMP only",
+      "acl_content": "permit icmp any any\ndeny ip any any"
+    }
+  ],
+  "authorization_profiles": [
+    {
+      "name": "Employee-Access",
+      "vlan": 10,
+      "sgt": 10,
+      "description": "Employee access profile"
+    },
+    {
+      "name": "Guest-Access",
+      "vlan": 30,
+      "sgt": 20,
+      "description": "Guest access profile"
+    },
+    {
+      "name": "Contractor-Access",
+      "vlan": 10,
+      "sgt": 30,
+      "description": "Contractor access profile"
+    },
+    {
+      "name": "IoT-Access",
+      "vlan": 60,
+      "sgt": 40,
+      "description": "IoT device access profile"
+    },
+    {
+      "name": "Voice-Access",
+      "vlan": 20,
+      "sgt": 60,
+      "description": "Voice device access profile"
+    }
+  ]
+}

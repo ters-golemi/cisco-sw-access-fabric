@@ -1,0 +1,208 @@
+---
+# Global variables for SD-Access deployment
+
+# NTP Configuration
+ntp_servers:
+  - 10.1.1.100
+  - 10.1.1.101
+
+# DNS Configuration
+dns_servers:
+  - 10.1.1.200
+  - 10.1.1.201
+dns_domain: example.com
+
+# SNMP Configuration
+snmp_community: public
+snmp_location: "Headquarters Campus"
+snmp_contact: "netadmin@example.com"
+
+# Syslog Configuration
+syslog_servers:
+  - 10.1.1.150
+
+# RADIUS Configuration (ISE)
+radius_servers:
+  - server: 10.1.1.20
+    auth_port: 1812
+    acct_port: 1813
+    key: "{{ vault_radius_key }}"
+  - server: 10.1.1.21
+    auth_port: 1812
+    acct_port: 1813
+    key: "{{ vault_radius_key }}"
+
+# Underlay Configuration
+underlay:
+  routing_protocol: isis  # Options: isis, ospf
+  mtu: 9100
+  isis:
+    area: "49.0001"
+    level: "level-2-only"
+    metric_style: wide
+  ospf:
+    process_id: 100
+    area: 0
+
+# Virtual Networks (VLANs to VNs mapping)
+virtual_networks:
+  - name: VN-Data
+    vlan_id: 10
+    vrf: VN-Data
+    ip_pool: 10.10.0.0/16
+    gateway: 10.10.10.1
+    subnet: 10.10.10.0/24
+    
+  - name: VN-Voice
+    vlan_id: 20
+    vrf: VN-Voice
+    ip_pool: 10.20.0.0/16
+    gateway: 10.20.20.1
+    subnet: 10.20.20.0/24
+    
+  - name: VN-Guest
+    vlan_id: 30
+    vrf: VN-Guest
+    ip_pool: 10.30.0.0/16
+    gateway: 10.30.30.1
+    subnet: 10.30.30.0/24
+    
+  - name: VN-Management
+    vlan_id: 40
+    vrf: VN-Management
+    ip_pool: 10.40.0.0/16
+    gateway: 10.40.40.1
+    subnet: 10.40.40.0/24
+    
+  - name: VN-Security
+    vlan_id: 50
+    vrf: VN-Security
+    ip_pool: 10.50.0.0/16
+    gateway: 10.50.50.1
+    subnet: 10.50.50.0/24
+    
+  - name: VN-IoT
+    vlan_id: 60
+    vrf: VN-IoT
+    ip_pool: 10.60.0.0/16
+    gateway: 10.60.60.1
+    subnet: 10.60.60.0/24
+    
+  - name: VN-Servers
+    vlan_id: 70
+    vrf: VN-Servers
+    ip_pool: 10.70.0.0/16
+    gateway: 10.70.70.1
+    subnet: 10.70.70.0/24
+    
+  - name: VN-Storage
+    vlan_id: 80
+    vrf: VN-Storage
+    ip_pool: 10.80.0.0/16
+    gateway: 10.80.80.1
+    subnet: 10.80.80.0/24
+    
+  - name: VN-DMZ
+    vlan_id: 90
+    vrf: VN-DMZ
+    ip_pool: 10.90.0.0/16
+    gateway: 10.90.90.1
+    subnet: 10.90.90.0/24
+    
+  - name: VN-Partner
+    vlan_id: 100
+    vrf: VN-Partner
+    ip_pool: 10.100.0.0/16
+    gateway: 10.100.100.1
+    subnet: 10.100.100.0/24
+
+# Security Groups (SGTs)
+security_groups:
+  - name: Employees
+    tag: 10
+    description: "Corporate employees"
+    
+  - name: Guests
+    tag: 20
+    description: "Guest users"
+    
+  - name: Contractors
+    tag: 30
+    description: "Contract workers"
+    
+  - name: IoT-Devices
+    tag: 40
+    description: "IoT and smart devices"
+    
+  - name: Corporate-Servers
+    tag: 50
+    description: "Corporate servers"
+    
+  - name: Voice-Devices
+    tag: 60
+    description: "IP phones and voice devices"
+    
+  - name: Video-Devices
+    tag: 70
+    description: "Video conferencing equipment"
+    
+  - name: Printers
+    tag: 80
+    description: "Network printers"
+    
+  - name: Unknown
+    tag: 100
+    description: "Unknown devices"
+
+# DNA Center Configuration
+dnac:
+  ip: 10.1.1.10
+  username: admin
+  password: "{{ vault_dnac_password }}"
+  version: "2.3.3"
+  verify_ssl: false
+
+# ISE Configuration
+ise:
+  primary_ip: 10.1.1.20
+  secondary_ip: 10.1.1.21
+  username: admin
+  password: "{{ vault_ise_password }}"
+  version: "3.1"
+  verify_ssl: false
+  pxgrid_enabled: true
+
+# Fabric Site Configuration
+fabric_site:
+  name: "Campus-Fabric-Site1"
+  site_hierarchy: "Global/USA/Campus1"
+  fabric_type: "FABRIC_SITE"
+
+# Border Handoff Configuration
+border_handoffs:
+  - border_device: wan-router-1
+    external_interface: GigabitEthernet0/0/0
+    external_ip: 192.168.100.1/30
+    internal_vn: VN-Data
+    routing_protocol: bgp
+    
+  - border_device: wan-router-2
+    external_interface: GigabitEthernet0/0/0
+    external_ip: 192.168.100.5/30
+    internal_vn: VN-Data
+    routing_protocol: bgp
+
+# QoS Configuration
+qos:
+  enabled: true
+  model: "8class"
+  voice_vlan: 20
+  video_vlan: 70
+
+# Authentication Configuration
+authentication:
+  method: dot1x
+  fallback: mab
+  guest_vlan: 30
+  auth_fail_vlan: 999
+  critical_vlan: 998

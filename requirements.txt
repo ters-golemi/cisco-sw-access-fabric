@@ -1,0 +1,39 @@
+# Python Requirements for SD-Access Automation
+
+# Core dependencies
+requests>=2.28.0
+urllib3>=1.26.0
+
+# Ansible (if installed via pip)
+ansible>=2.14.0
+ansible-core>=2.14.0
+
+# Network automation libraries
+netmiko>=4.1.0
+paramiko>=3.0.0
+
+# Data processing
+pyyaml>=6.0
+jinja2>=3.1.0
+
+# JSON processing
+jsonschema>=4.17.0
+
+# Command line interface
+click>=8.1.0
+rich>=13.0.0
+
+# Logging and debugging
+colorlog>=6.7.0
+
+# API clients
+pyats>=22.0
+genie>=22.0
+
+# Optional: DNA Center SDK
+dnacentersdk>=2.5.0
+
+# Development tools (optional)
+pylint>=2.16.0
+black>=23.0.0
+pytest>=7.2.0
