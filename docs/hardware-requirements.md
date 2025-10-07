@@ -10,16 +10,22 @@
 
 ## Required Hardware for SD-Access Deployment
 
-### 1. DNA Center Appliance
+### 1. Cisco Catalyst Center Appliance
 
-**Required**: 1-2 DNA Center appliances (for redundancy)
+**Required**: 3 Catalyst Center appliances (for high availability deployment)
 
 - **Model Options**:
-  - DNA Center DN2-HW-APL (Physical Appliance)
-  - DNA Center DN2-HW-APL-L (Large deployment)
-  - DNA Center Virtual Appliance (for smaller deployments/testing)
+  - Catalyst Center DN2-HW-APL (Physical Appliance)
+  - Catalyst Center DN2-HW-APL-L (Large deployment)
+  - Catalyst Center Virtual Appliance (for smaller deployments/testing)
 
-- **Minimum Specifications** (Physical):
+- **High Availability Configuration**:
+  - 3-node cluster for maximum uptime and fault tolerance
+  - Active-Active-Active cluster configuration
+  - Load distribution across all three nodes
+  - Automatic failover with zero downtime
+
+- **Minimum Specifications per Node** (Physical):
   - 44 vCPUs
   - 256 GB RAM
   - 3 TB storage (RAID 10)
@@ -29,7 +35,7 @@
 
 ### 2. Identity Services Engine (ISE)
 
-**Required**: 2 ISE appliances (minimum for redundancy)
+**Required**: 3 ISE appliances (for high availability deployment)
 
 - **Model Options**:
   - ISE-3595-K9 (Large deployment)
@@ -37,7 +43,13 @@
   - ISE-3495-K9 (Small deployment)
   - ISE Virtual Appliance
 
-- **Minimum Specifications** (ISE-3515):
+- **High Availability Configuration**:
+  - 3-node deployment: 2 Policy Service Nodes (PSN) + 1 Policy Administration Node (PAN)
+  - Automatic failover between PSN nodes
+  - Geographic distribution recommended for disaster recovery
+  - Load balancing across PSN nodes for optimal performance
+
+- **Minimum Specifications per Node** (ISE-3515):
   - 24 vCPUs
   - 64 GB RAM
   - 600 GB storage

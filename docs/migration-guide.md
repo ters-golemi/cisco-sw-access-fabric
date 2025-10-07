@@ -102,19 +102,27 @@ Tasks:
 
 ## Phase 2: Infrastructure Deployment (Week 3-4)
 
-### 2.1 DNA Center Setup
+### 2.1 Cisco Catalyst Center Setup
 
-**Objective**: Install and configure DNA Center
+**Objective**: Install and configure 3-node Catalyst Center cluster for high availability
 
 Tasks:
-- [ ] Rack and cable DNA Center appliance
-- [ ] Perform initial cluster setup
-- [ ] Configure system settings (NTP, DNS, certificates)
-- [ ] Configure backup schedule
+- [ ] Rack and cable 3 Catalyst Center appliances
+- [ ] Perform initial 3-node cluster setup for high availability
+- [ ] Configure cluster networking and inter-node connectivity
+- [ ] Configure system settings (NTP, DNS, certificates) on all nodes
+- [ ] Configure backup schedule with cluster-aware backups
 - [ ] Integrate with ISE using pxGrid
 - [ ] Add network devices to inventory
 - [ ] Configure device credentials
 - [ ] Set up site hierarchy
+
+**High Availability Configuration**:
+- **Node 1**: Primary cluster member (active)
+- **Node 2**: Secondary cluster member (active) 
+- **Node 3**: Tertiary cluster member (active)
+- **Load Distribution**: Automatic across all three nodes
+- **Failover**: Automatic with zero downtime
 
 **DNA Center Initial Configuration**:
 ```bash
@@ -139,37 +147,46 @@ maglev-config update
 
 ### 2.2 ISE Setup
 
-**Objective**: Install and configure ISE for policy services
+**Objective**: Install and configure 3-node ISE deployment for high availability
 
 Tasks:
-- [ ] Rack and cable ISE appliances
-- [ ] Perform initial setup on both nodes
-- [ ] Configure primary and secondary nodes
-- [ ] Configure NTP, DNS, certificates
-- [ ] Enable pxGrid services
-- [ ] Configure network device authentication (RADIUS)
+- [ ] Rack and cable 3 ISE appliances
+- [ ] Perform initial setup on all three nodes
+- [ ] Configure ISE cluster with high availability personas
+- [ ] Configure NTP, DNS, certificates on all nodes
+- [ ] Enable pxGrid services with redundancy
+- [ ] Configure network device authentication (RADIUS) with load balancing
 - [ ] Set up basic authentication policies
 - [ ] Configure security group tags (SGTs)
 - [ ] Create TrustSec policy matrix
 
-**ISE Configuration Steps**:
+**ISE High Availability Configuration**:
 ```
-1. Initial ISE Node Setup:
-   - Primary Node: ise-primary.example.com
-   - Secondary Node: ise-secondary.example.com
-   - Configure both nodes with appropriate personas
+1. ISE 3-Node Deployment:
+   - Primary Administration Node (PAN): ise-pan.example.com
+   - Policy Service Node 1 (PSN): ise-psn1.example.com  
+   - Policy Service Node 2 (PSN): ise-psn2.example.com
+   - Automatic failover between PSN nodes
+   - Geographic distribution recommended
 
-2. pxGrid Configuration:
+2. Node Personas and Roles:
+   - PAN: Administration, Monitoring, pxGrid publisher
+   - PSN1: Policy Service, pxGrid client, RADIUS/TACACS+
+   - PSN2: Policy Service, pxGrid client, RADIUS/TACACS+
+
+3. pxGrid High Availability:
    - Administration > System > Deployment
-   - Enable pxGrid on primary node
-   - Generate pxGrid certificates
+   - Enable pxGrid on PAN with automatic failover
+   - Configure pxGrid clients on both PSN nodes
+   - Generate pxGrid certificates for secure communication
 
-3. Network Device Configuration:
+4. Network Device Load Balancing:
    - Administration > Network Resources > Network Devices
-   - Add all fabric devices
-   - Configure RADIUS shared secret
+   - Add all fabric devices with both PSN nodes as RADIUS servers
+   - Configure RADIUS shared secret (same on both PSNs)
+   - Enable load balancing and failover
 
-4. Security Groups:
+5. Security Groups:
    - Work Centers > TrustSec > Components > Security Groups
    - Create SGTs for each user/device role:
      * Employees (SGT 10)
