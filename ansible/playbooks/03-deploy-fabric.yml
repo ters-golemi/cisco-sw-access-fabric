@@ -1,0 +1,183 @@
+---
+# Playbook to deploy SD-Access fabric using DNA Center APIs
+# This automates fabric site creation and device provisioning
+
+- name: Deploy SD-Access Fabric via DNA Center
+  hosts: localhost
+  gather_facts: no
+  vars:
+    dnac_login: &dnac_login
+      dnac_host: "{{ dnac.ip }}"
+      dnac_username: "{{ dnac.username }}"
+      dnac_password: "{{ dnac.password }}"
+      dnac_verify: "{{ dnac.verify_ssl }}"
+      dnac_version: "{{ dnac.version }}"
+  
+  tasks:
+    - name: Authenticate to DNA Center
+      uri:
+        url: "https://{{ dnac.ip }}/dna/system/api/v1/auth/token"
+        method: POST
+        user: "{{ dnac.username }}"
+        password: "{{ dnac.password }}"
+        force_basic_auth: yes
+        validate_certs: "{{ dnac.verify_ssl }}"
+        return_content: yes
+      register: dnac_auth
+      tags: auth
+
+    - name: Set DNA Center auth token
+      set_fact:
+        dnac_token: "{{ dnac_auth.json.Token }}"
+      tags: auth
+
+    - name: Create fabric site
+      uri:
+        url: "https://{{ dnac.ip }}/dna/intent/api/v1/business/sda/fabric-site"
+        method: POST
+        headers:
+          X-Auth-Token: "{{ dnac_token }}"
+          Content-Type: "application/json"
+        body_format: json
+        body:
+          siteNameHierarchy: "{{ fabric_site.site_hierarchy }}"
+          fabricType: "{{ fabric_site.fabric_type }}"
+        validate_certs: "{{ dnac.verify_ssl }}"
+        status_code: [200, 202]
+      register: fabric_site_result
+      tags: fabric-site
+
+    - name: Display fabric site creation result
+      debug:
+        var: fabric_site_result
+      tags: fabric-site
+
+    - name: Add control plane nodes to fabric
+      uri:
+        url: "https://{{ dnac.ip }}/dna/intent/api/v1/business/sda/control-plane-device"
+        method: POST
+        headers:
+          X-Auth-Token: "{{ dnac_token }}"
+          Content-Type: "application/json"
+        body_format: json
+        body:
+          deviceManagementIpAddress: "{{ hostvars[item].ansible_host }}"
+          siteNameHierarchy: "{{ fabric_site.site_hierarchy }}"
+          routeDistributionProtocol: "LISP_BGP"
+        validate_certs: "{{ dnac.verify_ssl }}"
+        status_code: [200, 202]
+      loop: "{{ groups['control_plane'] }}"
+      register: control_plane_result
+      tags: control-plane
+
+    - name: Add border nodes to fabric
+      uri:
+        url: "https://{{ dnac.ip }}/dna/intent/api/v1/business/sda/border-device"
+        method: POST
+        headers:
+          X-Auth-Token: "{{ dnac_token }}"
+          Content-Type: "application/json"
+        body_format: json
+        body:
+          deviceManagementIpAddress: "{{ hostvars[item].ansible_host }}"
+          siteNameHierarchy: "{{ fabric_site.site_hierarchy }}"
+          externalDomainRoutingProtocolName: "BGP"
+          internalAutonomouSystemNumber: "65001"
+          borderSessionType: "EXTERNAL"
+        validate_certs: "{{ dnac.verify_ssl }}"
+        status_code: [200, 202]
+      loop: "{{ groups['border_nodes'] }}"
+      register: border_result
+      tags: border
+
+    - name: Add edge nodes to fabric
+      uri:
+        url: "https://{{ dnac.ip }}/dna/intent/api/v1/business/sda/edge-device"
+        method: POST
+        headers:
+          X-Auth-Token: "{{ dnac_token }}"
+          Content-Type: "application/json"
+        body_format: json
+        body:
+          deviceManagementIpAddress: "{{ hostvars[item].ansible_host }}"
+          siteNameHierarchy: "{{ fabric_site.site_hierarchy }}"
+        validate_certs: "{{ dnac.verify_ssl }}"
+        status_code: [200, 202]
+      loop: "{{ groups['edge_nodes'] }}"
+      register: edge_result
+      tags: edge
+
+    - name: Create virtual networks
+      uri:
+        url: "https://{{ dnac.ip }}/dna/intent/api/v1/business/sda/virtual-network"
+        method: POST
+        headers:
+          X-Auth-Token: "{{ dnac_token }}"
+          Content-Type: "application/json"
+        body_format: json
+        body:
+          virtualNetworkName: "{{ item.name }}"
+          siteNameHierarchy: "{{ fabric_site.site_hierarchy }}"
+        validate_certs: "{{ dnac.verify_ssl }}"
+        status_code: [200, 202]
+      loop: "{{ virtual_networks }}"
+      register: vn_result
+      tags: virtual-networks
+
+    - name: Add IP pools for virtual networks
+      uri:
+        url: "https://{{ dnac.ip }}/dna/intent/api/v1/business/sda/virtualnetwork/ippool"
+        method: POST
+        headers:
+          X-Auth-Token: "{{ dnac_token }}"
+          Content-Type: "application/json"
+        body_format: json
+        body:
+          virtualNetworkName: "{{ item.name }}"
+          ipPoolName: "{{ item.name }}_Pool"
+          trafficType: "DATA"
+          ipPoolRange: "{{ item.ip_pool }}"
+          gateway: "{{ item.gateway }}"
+        validate_certs: "{{ dnac.verify_ssl }}"
+        status_code: [200, 202]
+      loop: "{{ virtual_networks }}"
+      register: ippool_result
+      tags: ip-pools
+
+    - name: Provision fabric devices
+      uri:
+        url: "https://{{ dnac.ip }}/dna/intent/api/v1/business/sda/provision-device"
+        method: POST
+        headers:
+          X-Auth-Token: "{{ dnac_token }}"
+          Content-Type: "application/json"
+        body_format: json
+        body:
+          deviceManagementIpAddress: "{{ hostvars[item].ansible_host }}"
+          siteNameHierarchy: "{{ fabric_site.site_hierarchy }}"
+        validate_certs: "{{ dnac.verify_ssl }}"
+        status_code: [200, 202]
+      loop: "{{ groups['fabric_devices'] }}"
+      register: provision_result
+      tags: provision
+
+    - name: Wait for provisioning to complete
+      pause:
+        minutes: 5
+      tags: provision
+
+    - name: Verify fabric status
+      uri:
+        url: "https://{{ dnac.ip }}/dna/intent/api/v1/business/sda/fabric-site?siteNameHierarchy={{ fabric_site.site_hierarchy }}"
+        method: GET
+        headers:
+          X-Auth-Token: "{{ dnac_token }}"
+        validate_certs: "{{ dnac.verify_ssl }}"
+        return_content: yes
+      register: fabric_status
+      tags: verify
+
+    - name: Display fabric status
+      debug:
+        var: fabric_status.json
+      tags: verify

@@ -1,0 +1,104 @@
+{
+  "fabric_site": {
+    "site_hierarchy": "Global/USA/Campus1",
+    "fabric_type": "FABRIC_SITE"
+  },
+  "control_plane_devices": [
+    {
+      "name": "core-switch-1",
+      "ip": "10.2.1.1"
+    },
+    {
+      "name": "core-switch-2",
+      "ip": "10.2.1.2"
+    }
+  ],
+  "border_devices": [
+    {
+      "name": "wan-router-1",
+      "ip": "10.2.2.1"
+    },
+    {
+      "name": "wan-router-2",
+      "ip": "10.2.2.2"
+    }
+  ],
+  "edge_devices": [
+    {
+      "name": "aggr-switch-1",
+      "ip": "10.2.3.1"
+    },
+    {
+      "name": "aggr-switch-2",
+      "ip": "10.2.3.2"
+    },
+    {
+      "name": "access-switch-1",
+      "ip": "10.2.4.1"
+    },
+    {
+      "name": "access-switch-2",
+      "ip": "10.2.4.2"
+    },
+    {
+      "name": "access-switch-3",
+      "ip": "10.2.4.3"
+    },
+    {
+      "name": "access-switch-4",
+      "ip": "10.2.4.4"
+    }
+  ],
+  "virtual_networks": [
+    {
+      "name": "VN-Data",
+      "ip_pool": "10.10.0.0/16",
+      "gateway": "10.10.10.1"
+    },
+    {
+      "name": "VN-Voice",
+      "ip_pool": "10.20.0.0/16",
+      "gateway": "10.20.20.1"
+    },
+    {
+      "name": "VN-Guest",
+      "ip_pool": "10.30.0.0/16",
+      "gateway": "10.30.30.1"
+    },
+    {
+      "name": "VN-Management",
+      "ip_pool": "10.40.0.0/16",
+      "gateway": "10.40.40.1"
+    },
+    {
+      "name": "VN-Security",
+      "ip_pool": "10.50.0.0/16",
+      "gateway": "10.50.50.1"
+    },
+    {
+      "name": "VN-IoT",
+      "ip_pool": "10.60.0.0/16",
+      "gateway": "10.60.60.1"
+    },
+    {
+      "name": "VN-Servers",
+      "ip_pool": "10.70.0.0/16",
+      "gateway": "10.70.70.1"
+    },
+    {
+      "name": "VN-Storage",
+      "ip_pool": "10.80.0.0/16",
+      "gateway": "10.80.80.1"
+    },
+    {
+      "name": "VN-DMZ",
+      "ip_pool": "10.90.0.0/16",
+      "gateway": "10.90.90.1"
+    },
+    {
+      "name": "VN-Partner",
+      "ip_pool": "10.100.0.0/16",
+      "gateway": "10.100.100.1"
+    }
+  ]
+}

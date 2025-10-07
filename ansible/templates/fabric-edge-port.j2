@@ -1,0 +1,32 @@
+!
+! Fabric Edge Port Configuration Template
+! Device: {{ inventory_hostname }}
+! Port: {{ port_name }}
+!
+interface {{ port_name }}
+ description {{ port_description | default('Fabric Edge Port') }}
+ switchport mode access
+ switchport access vlan {{ vlan_id }}
+ !
+ ! Authentication
+ authentication host-mode multi-auth
+ authentication port-control auto
+ authentication periodic
+ authentication timer reauthenticate server
+ !
+ ! MAB Configuration
+ mab
+ !
+ ! 802.1X Configuration
+ dot1x pae authenticator
+ dot1x timeout tx-period 5
+ !
+ ! Device Tracking
+ device-tracking attach-policy IPDT_POLICY
+ !
+ ! Spanning Tree
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ !
+ no shutdown
+!

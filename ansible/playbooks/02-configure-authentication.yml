@@ -1,0 +1,92 @@
+---
+# Playbook to configure 802.1X and ISE integration
+# Prepares switches for SD-Access authentication
+
+- name: Configure ISE Integration and Authentication
+  hosts: fabric_devices
+  gather_facts: no
+  
+  tasks:
+    - name: Enable AAA new-model
+      cisco.ios.ios_config:
+        lines:
+          - "aaa new-model"
+      tags: aaa
+
+    - name: Configure AAA authentication
+      cisco.ios.ios_config:
+        lines:
+          - "aaa authentication login default group radius local"
+          - "aaa authentication dot1x default group radius"
+          - "aaa authorization network default group radius"
+          - "aaa authorization exec default group radius local"
+          - "aaa accounting update newinfo"
+          - "aaa accounting dot1x default start-stop group radius"
+          - "aaa accounting network default start-stop group radius"
+      tags: aaa
+
+    - name: Configure RADIUS servers
+      cisco.ios.ios_config:
+        lines:
+          - "address ipv4 {{ item.server }} auth-port {{ item.auth_port }} acct-port {{ item.acct_port }}"
+          - "key {{ item.key }}"
+        parents: "radius server ISE-{{ loop.index }}"
+      loop: "{{ radius_servers }}"
+      loop_control:
+        index_var: loop.index
+      tags: radius
+
+    - name: Configure RADIUS server group
+      cisco.ios.ios_config:
+        lines:
+          - "server name ISE-{{ loop.index }}"
+        parents: "aaa group server radius ISE-GROUP"
+      loop: "{{ radius_servers }}"
+      loop_control:
+        index_var: loop.index
+      tags: radius
+
+    - name: Enable device tracking
+      cisco.ios.ios_config:
+        lines:
+          - "device-tracking tracking"
+          - "device-tracking policy IPDT_POLICY"
+          - "tracking enable"
+      tags: device-tracking
+
+    - name: Configure 802.1X system authentication
+      cisco.ios.ios_config:
+        lines:
+          - "dot1x system-auth-control"
+          - "dot1x critical eapol"
+      tags: dot1x
+
+    - name: Enable CTS (TrustSec)
+      cisco.ios.ios_config:
+        lines:
+          - "cts authorization list ISE-GROUP"
+          - "cts role-based enforcement"
+      tags: cts
+
+    - name: Save configuration
+      cisco.ios.ios_config:
+        save_when: always
+      tags: save
+
+- name: Verify RADIUS connectivity
+  hosts: fabric_devices
+  gather_facts: no
+  
+  tasks:
+    - name: Test RADIUS connectivity
+      cisco.ios.ios_command:
+        commands:
+          - "test aaa group radius {{ radius_servers[0].server }} admin {{ vault_device_password }} new-code"
+      register: radius_test
+      ignore_errors: yes
+      tags: verify
+
+    - name: Display RADIUS test results
+      debug:
+        var: radius_test.stdout_lines
+      tags: verify
